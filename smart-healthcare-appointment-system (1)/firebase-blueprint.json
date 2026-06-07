@@ -1,0 +1,107 @@
+{
+  "entities": {
+    "Hospital": {
+      "title": "Hospital",
+      "description": "Hospital facility details",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "location": { "type": "string" },
+        "rating": { "type": "number" },
+        "image": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["name", "location"]
+    },
+    "Doctor": {
+      "title": "Doctor",
+      "description": "Healthcare provider profile",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "specialty": { "type": "string" },
+        "experience": { "type": "string" },
+        "rating": { "type": "number" },
+        "image": { "type": "string" },
+        "hospitalId": { "type": "string" },
+        "hospitalName": { "type": "string" }
+      },
+      "required": ["name", "specialty", "hospitalId"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "Healthcare appointment booking",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "doctorId": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "status": { "type": "string", "enum": ["Upcoming", "Pending", "Completed", "Cancelled"] },
+        "reason": { "type": "string" }
+      },
+      "required": ["patientId", "doctorId", "date", "time", "status"]
+    },
+    "Medicine": {
+      "title": "Medicine",
+      "description": "Pharmaceutical product details",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "price": { "type": "number" },
+        "image": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["name", "category", "price"]
+    },
+    "WaitingPatient": {
+      "title": "WaitingPatient",
+      "description": "Patient in virtual consultation queue",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "waitTime": { "type": "string" },
+        "reason": { "type": "string" },
+        "priority": { "type": "string", "enum": ["High", "Normal"] }
+      },
+      "required": ["name", "priority"]
+    },
+    "CallLog": {
+      "title": "CallLog",
+      "description": "Virtual consultation session log",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "doctorId": { "type": "string" },
+        "duration": { "type": "string" },
+        "date": { "type": "string" },
+        "status": { "type": "string", "enum": ["Completed", "Missed"] },
+        "type": { "type": "string", "enum": ["Video", "Audio"] },
+        "recordingUrl": { "type": "string" }
+      },
+      "required": ["patientId", "doctorId", "date", "status", "type"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account and profile data",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["patient", "doctor"] }
+      },
+      "required": ["name", "email", "role"]
+    }
+  },
+  "firestore": {
+    "/hospitals/{hospitalId}": { "schema": "Hospital", "description": "Global hospital records" },
+    "/doctors/{doctorId}": { "schema": "Doctor", "description": "Global doctor directory" },
+    "/appointments/{appointmentId}": { "schema": "Appointment", "description": "Global appointment records" },
+    "/medicines/{medicineId}": { "schema": "Medicine", "description": "Available pharmacy items" },
+    "/doctor_data/{doctorId}/waiting_list/{patientId}": { "schema": "WaitingPatient", "description": "Doctor-specific patient queue" },
+    "/doctor_data/{doctorId}/call_history/{callId}": { "schema": "CallLog", "description": "Doctor-specific call logs" },
+    "/users/{userId}": { "schema": "UserProfile", "description": "User identity and roles" }
+  }
+}

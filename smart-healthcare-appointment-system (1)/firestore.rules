@@ -1,0 +1,103 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- REUSABLE HELPERS ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function emailVerified() {
+      return request.auth.token.email_verified == true;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- ENTITY VALIDATORS ---
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['name', 'email', 'role'])
+        && data.keys().size() == 3
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.role in ['patient', 'doctor']
+        && data.email is string && data.email == request.auth.token.email;
+    }
+
+    function isValidAppointment(data) {
+      return data.keys().hasAll(['patientId', 'doctorId', 'date', 'time', 'status'])
+        && data.keys().size() <= 7 
+        && data.patientId is string && data.patientId == request.auth.uid
+        && data.doctorId is string && data.doctorId.size() <= 128
+        && data.date is string && data.time is string
+        && data.status in ['Upcoming', 'Pending', 'Completed', 'Cancelled']
+        && (data.get('reason', '') is string && data.get('reason', '').size() <= 500);
+    }
+
+    function isValidWaitingPatient(data) {
+      return data.keys().hasAll(['name', 'priority'])
+        && data.name is string && data.name.size() <= 100
+        && data.priority in ['High', 'Normal']
+        && (data.get('reason', '') is string && data.get('reason', '').size() <= 200)
+        && (data.get('waitTime', '') is string && data.get('waitTime', '').size() <= 50);
+    }
+
+    function isValidCallLog(data) {
+      return data.keys().hasAll(['patientId', 'doctorId', 'date', 'status', 'type'])
+        && data.patientId is string && data.doctorId == request.auth.uid
+        && data.status in ['Completed', 'Missed']
+        && data.type in ['Video', 'Audio']
+        && (data.get('recordingUrl', '') is string && data.get('recordingUrl', '').size() <= 1024);
+    }
+
+    // --- MATCH BLOCKS ---
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && emailVerified() && isValidUserProfile(request.resource.data);
+      allow update: if isOwner(userId) && emailVerified() 
+        && isValidUserProfile(request.resource.data)
+        && request.resource.data.role == resource.data.role; // Immutable role
+    }
+
+    match /hospitals/{hospitalId} {
+      allow read, write: if true;
+    }
+
+    match /doctors/{doctorId} {
+      allow read, write: if true;
+    }
+
+    match /medicines/{medicineId} {
+      allow read, write: if true;
+    }
+
+    match /appointments/{appointmentId} {
+      allow read, write: if true;
+    }
+
+    match /waiting_patients/{patientId} {
+      allow read, write: if true;
+    }
+
+    match /call_history/{callId} {
+      allow read, write: if true;
+    }
+
+    match /settings/{settingsId} {
+      allow read, write: if true;
+    }
+
+    match /notification_logs/{logId} {
+      allow read, write: if true;
+    }
+  }
+}
